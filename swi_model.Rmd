@@ -1,0 +1,1208 @@
+---
+title: "Surface water health indicator. Model description"
+author:
+  - Artur Radomyski^[Syngenta Crop Protection, Artur.Radomyski@syngenta.com]
+  - Roman Ashauer^[Syngenta Crop Protection, Roman.Ashauer@syngenta.com]
+date: "`r format(Sys.time(), '%d/%m/%y')`"
+abstract: |
+
+  Agriculture is one of main sources of diffuse pollution, such as fertilisers, plant protection products, solid particles or pathogens. In light of emerging conservation agriculture as a sustainable mean to tackle diffuse emmisions into aquatic environment we developed Bayesian Network (BN) model to help in predicting of nitrogen load into suface water at the farm level using site specific characteristics such as landscape, soil, cropping system and also to compare different conventional and conservation alternatives. We demonstrate that baye's net is a useful tool for data and knowledge assimilation and practical approach to test and compare effect of various agricultural interventions. Additionally, the concept of Grey Water Footprint is adopted as a qualitative and quantitative volumetric indicator of surface water pollution with nitrogen. The modelling exercise was performed on two scenarios differing in pOtential to generate surface runoff water and losses from farm. No-till practice would result better in reducing surface runoff water on farms with straight rows under small grain crops (wheat and oat) compared to two other alternatives, that is a cropping system conventionally farmed in straight rows and one with straight rows together with addition of crop residue. The result was even more pronounced under scenario 2 (e.g., slope 10%, Hydrologic Soil Group (HSG) C, Sandy clay loam, low organic matter content (OM)), which presented worse hydrologic conditions in comparison to scenario 1 (slope 2%, Hydrologic Soil Group (HSG) B, Silt loam, medium organic matter content (OM)). 2-fold reduction of soil erosion was observed for row crops with no-till when comparted to straight row farming. Sensitivity analysis was used to rank input parameters according to their importance in affecting estimation of processes:surface runoff, soil erosion rate, emmision: nitrogen load and impact: nitrogen Grey Water Footprint (nGWF). Weather inputs are shown to be ranked high in importance for surface runoff, and topographic information for soil erosion, whereas agricultural treatments were ranked below these inputs. Effect of no-till practice on reducing nitrogen load and nGWF was larger under small grain than row crops.
+  
+  **Keywords:** Bayesian Network, Conservation Agriculture, Nitrogen, Soil, Surface Water
+
+output:
+   bookdown::pdf_document2:
+    keep_md: yes
+    toc: true
+    toc_depth: 6
+    df_print: kable
+    number_sections: false
+    highlight: default
+spacing: double
+bibliography: SWI_ref.bib
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee-with-url.csl
+link-citations: yes
+linkcolor: blue
+linestretch: 1.5
+urlcolor: blue
+geometry: margin = 1in
+mainfont: Arial
+fontsize: 11pt
+fig_caption: true
+header-includes:
+  - \usepackage[left]{lineno}
+  - \linenumbers
+  - \usepackage{float}
+  - \usepackage{titlesec}
+  - \usepackage{svg}
+---
+
+```{r include=FALSE, load-packages, message=FALSE, warning=FALSE}
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(gridExtra)
+library(tinytex)
+library(ggplot2)
+library(ggpubr)
+library(cowplot)
+library(readxl)
+library(ggrepel)
+library(svglite)
+library(patchwork)
+library(magick)
+
+opts_chunk$set(echo = FALSE, fig.pos = "H")
+
+```
+
+\newpage
+
+**Abbreviattions**
+
+BN - Bayesian Network or Bayes' Net
+
+CL - Counting-Learning
+
+CN - Curve Number
+
+CPT - Conditional Probability Table
+
+EM - Expectation-Maximisation
+
+GWF - Grey Water Footprint
+
+HSG - Hydrologic Soil Group
+
+nGWF - Nitrogen Grey Water Footprint
+
+USLE - Universal Soil Loss Equation
+
+\newpage
+
+# Introduction {#intro}
+
+Excessive nutrient losses to water bodies leading to deterioration of water quality is an ongoing global issues [@oecd2021] with agricultural as the diffuse nutrient sources of nitrogen and phosphorus remain the principal polluters of water bodies [@oecd2020]. A better understanding of the impact of weed control practices on edge-of-field surface water quality is needed. Likewise, the simple tool for indicating which agricultural practices are more beneficial in sustaining healthy surface water bodies are needed at the individual farm level. In order to address such problem research question was formulated to guide the development of the surface water health indicator: What are the effects of agricultural practices, both conventional and conservation, on nitrogen inputs to edge-of-field freshwater bodies? The indicator will be a result of knowledge synthesis about effect of agricultural practices on nitrogen losses from the farmlands, subsequently assembled in a Bayes Net for prognostic assessment of nitrogen input into aquatic bodies. Further work may take into account number of other agronomic practices such as crop rotation or cover crops, and their effect on potential pollutants inputs, including phosphorus, nutrients and agrichemicals, on surface water body quality and quantity.
+
+Bayesian Network was applied as a modelling framework as it has been demonstrated to be a pragmatic way to address complex environmental and ecological systems where uncertainty due to limited knowledge and natural variability of underlying processes is high [@hart2008]. Briefly, Bayesian networks (BNs) are graphical models for reasoning under uncertainty, where the nodes represent variables (discrete or continuous) and arcs represent direct connections between them [@koller2009book]. The relationships between variables (nodes) in the BNs are represented by conditional probabilities which are organised in Conditional Probability Tables (CPTs). Such probabilistic framework incorporates Bayes' theorem to make predictions when new data become available in the form of posterior probabilities, via updating of the information initially used in the network in the form of prior probabilities [@neapolitan2004book].
+
+There are numerous examples in scientific literature where Bayesian networks have been applied to various problems within environmental and ecological context [@borsuk2001; @borsuk2004; @kaikkonen2021; @marcot2001; @nash2010; @reckhow1999]. They can be used to assess the effectiveness of interventions (e .g., management actions) and system changes (e.g., those predicted for climate change) to the ecological endpoints. Additionally, flexibility of the BNs allows for practice of adaptive management in decision making [@howes2010; @calder2020]. Another rationale for leveraging Bayesian networks in decision-making is that they can be used as a platform to combine statistical and mechanistic knowledge and as a tool for capturing, improving, and communicating the knowledge base [@carriger2019report]. An example of such application is recently proposed in the soil compaction risk tool where BN framework has been applied as a predictive methodology to aid on-farm agricultural decision-making [@roberton2021]. Depending on the application domain use of the Baye's nets can be qualitative [@bashari2008] or quantitative [@barton2008, @calder2020] or a mixture of both [@bicking2019].
+
+The concept of Grey Water Footprint proposed by Hoekstra [@hoekstra2002], became an international standard for accounting water footprint [@aldaya2012], supported by numerous applications published in peer-reviewed journals [@mekonnen2014; @mekonnen2015; @mekonnen2010; @muratoglu2020; @wohler2020]. It was used as the indicator to express quantitatively the volumetric amount of water needed to dilute pollutants from an individual farm.
+
+The objective of this work is to develop a probabilistic model using Bayesian Network as a modelling framework to investigate how different weed control alternatives can influence total nitrogen load into small water bodies adjacent to a farm using site specific data. Grey water footprint is used as a quantitative metric to link the nitrogen load generated on a farm to volume of fresh water needed to assimilate it.
+
+# Materials and Methods {#mms}
+
+## Input data {#input}
+
+Due to the wide scope of the problem a large number and heterogeneity of the evidence was expected. The collections of available evidence constitutes the first step in developing surface water risk indicator aimed specifically at edge-of-field water bodies. This provided the input to estimating the impacts of conventional and conservation practices on water bodies adjacent to farms. Collected evidence was then used to inform the setting up of the Bayesian network model. The knowledge base created throughout literature review should help to address the problem of building environmental indicator suitable for estimating consequences of agricultural weed control methods on local freshwater bodies quality. The indicator will be a model build with the Bayes' Net (BN) for a prognostic assessment of effect of cropping practices on nitrogen impact on edge-of-field surface water at singular farm level.
+
+Initial approach required a collection of data. The main data source is the *Measured Annual Nutrient loads from AGricultural Environments* ([MANAGE](https://data.nal.usda.gov/dataset/measured-annual-nutrient-loads-agricultural-environments-manage-database)) dataset [@harmel2008] the creation of which was driven by the need to assess whether effects of agricultural conservation practices are of any benefit to preventing nutrient and soil losses from cropping systems on a field scale. Another source used was a dataset constructed within the *Conservation Effects Assessment Program* ([CEAP](http://ceap-nrcs.opendata.arcgis.com/)) [@maresch2008; @duriancik2008] and is limited only to North America. Additional data come from CoPE dataset, established within the same conservation agriculture evaluation programme [CEAP](http://ceap-nrcs.opendata.arcgis.com/), and from the literature data (review protocol). Literature collection started with writing down a search protocol.
+
+The collected evidence was used first, to establish set of variables, considered important for estimating nutrient input to aquatic system from farmlands, secondly to inform the structure of the model in which dependencies between variables will be encoded with conditional probabilities, and finally the strength of the relationships between variables are given by populating conditional probability tables with numerical values. The initial objective of the BN was to provide a generic model which then can be tailored to local farming conditions using more detailed approaches. List of search strings is compiled in [Table 1](#searchstring).
+
+```{r searchstring, paged.print=TRUE}
+
+Component <-  c("Compartment (Population)", "Practices (Intervention)", "Comparator (Alternatives)", "Outcomes")
+Definition <- c("Surface waters and in general freshwaters in edge-of-field ",
+                "Agriculture practices, weed control techniques, tillage",
+                "Various tillage alternatives, and tillage intensities, conservation agriculture practices",
+                "Measures in changes in nutrients input from cropping system")
+String <- c("'surface water' OR freshwater OR waterbody OR water OR watercourse",
+            "agricult* OR farm* OR crop* AND till* OR no$till OR zero$till* OR 'minimum till' OR 'direct drill*' OR 'strip till*' OR                'conservation till*'",
+            "'conservation agricult*' AND/OR 'conservation till*'",
+            "nutrient$ OR fertili* AND nitr* AND loss OR runoff OR drain* OR leach* AND 'water quality' OR 'surface water  quality'               OR 'fresh$water quality'")
+tb <- data.frame(Component, Definition, String)
+ 
+kable(tb,
+      caption = "Components of the question and appropriate search terms.",
+      booktabs = T,
+      col.names = c("Components of the question", "Definition", "Search string"),
+      linesep = "\\addlinespace") %>%
+  kable_styling(latex_options = c("hold_position","striped"),
+                font_size = 10) %>% 
+  column_spec(1, italic = T) %>% 
+  column_spec(2, width = "15em") %>%
+  column_spec(3, width = "15em") %>%
+  row_spec(0, bold = T)
+  
+```
+
+Search criteria developed to respective research question components are presented in [Table 2](#searchcriteria).
+
+```{r searchcriteria, paged.print=TRUE}
+
+Component <-  c("Compartment (Population)", "Practices (Intervention)", "Comparator (Alternatives)", "Outcomes", "Study design")
+Criteria <- c("Water bodies at a farm scale receiving all forms of N (dissolved or particulate), soil", "All tillage practices such as no tillage, reduced, minimum tillage,       grazing are grouped into conservation tillage and plough, pasture, hoeing, harrowing as conventional tillage. Supporting conservation practices are also considered", "Any variation of tillage, and comparison with control that is no tillage (conservation) or any conservation practice", "Change in N and soil concentration/load to water bodies before and after application of conservation practice", "Field studies comparing N and solids concentration/load between inlet and outlet water. Where possible both BA                   (Before-After) and CI (Control-Impact) studies will be considered. Consideration of other confounding factors (e.g., vulnerability to soil erosion, seasonal variation or land use) will be taken into account for article inclusion.")
+tb <- data.frame(Component, Criteria)
+ 
+kable(tb,
+      caption = "Eligibility criteria for evidence inclusion",
+      booktabs = T,
+      escape = F,
+      col.names = c("Components of the question", "Eligibility criteria"),
+      linesep = "\\addlinespace") %>%
+  kable_styling(latex_options = c("hold_position","striped"),
+                font_size = 10) %>% 
+  column_spec(1, italic = T) %>% 
+  column_spec(2, width = "30em") %>%
+  row_spec(0, bold = T)
+```
+
+The items obtained during literature search are available in the supplementary table 1.
+
+## Network structure {#network}
+
+**Model development**
+
+The structure of the BN is specified a priori through the understanding of the system to be modelled. The network structure was largely determined based on existing literature relevant to the research question and by following current guidelines [@cain2001book; @marcot2006; @chen2012]. In the BN the CPTs are a way of representing relationship between variables as probabilities. Development of the Bayes' Net and the CPTs can be generally summarised in the following actions: 1) Accumulation of information, 2) Subsequently building of a qualitative model by relating variables to one another, this will give rise to a graphical representation and conditional independence (at this stage there is no probabilistic interpretation), 3) The next stage is to specify joint distribution based on the variables in the model and the structure of the model, and 4) Finally, quantitative stage requires specification of the conditional probabilistic distributions. This sequence of actions was adapted in this work to address the posed problem. **Step1** Collection and reviewing data to understand the problem, and to conceptualise the model, **Step2** Simple draft of the structure connecting agricultural practices with nutrient losses from a farm to represent graphically the stated problem, namely, what is the effect of agricultural practices on nutrients runoff into adjacent surface water bodies at a farm scale?, **Step3** Refinement of the network by considering relevant processes (e.g., surface runoff) and variables governing them (e.g., precipitation, land slope), **Step4** Further adjustments with newly available data and better understanding of the relationships between input/output variables (e.g., effect of fertiliser amount and method used to apply it on nutrient runoff) and also interactions between input variables (e.g., use of conservation tillage and higher application of fertiliser).
+
+The first attempt to construct Bayes' Net was entirely data driven, meaning that the number of cases was compiled from the available literature. The single case can be seen as a one row in the dataset consisting of variables (columns). These variables, both dependent and explanatory, are selected based on available knowledge in such a way to try to explain output of interest (e.g., amount of annual surface runoff). Dependent variables, in our case, are surface runoff, soil loss, and nitrogen load, and explanatory variables belong to weather (precipitation), topographic (land slope) or land management (fertiliser application rate) categories. However this approach was not performing well during the model evaluation of the model. This was most likely due to high heterogeneity of the literature data. Example of such inconsistencies include studies where small and short term experimental setups where employed to produce surface runoff using simulated rainfall intensities and large scale, long term studies where natural precipitation was considered in generating surface runoff. Another noticed issues was units in which outcome of interest is reported such as nitrogen loads $(mass~of~pollutant/time)$ and concentrations $(mass~of~pollutant/volume)$ or depth $(mm~or~cm)$ and volume $(cm^3~or~dm^3)$ of surface runoff.
+
+Therefore the second attempt was made using well established and relatively simple relationships to model surface runoff, soil erosion, and nitrogen load.
+
+**Defining states**
+
+Continuous variables were discretized based on literature review (including guidelines and other grey literature) and analysis of datasets, for example by performing sensitivity analysis. Whenever changes were introduced to the network such as adding/removing links or nodes, or modifying states (the probability intervals) the sensitivity analysis was performed, and the metric variance reduction was calculated which describes the degree of sensitivity of one node to another, it will be 0 if the query variable (eg., surface runoff) is independent of the findings (new data entered in the network) in another node. Adding to many states can decrease the sensitivity of the output variables to important inputs.
+
+## Processes and endpoints {#endpoints}
+
+The main endpoint of the Surface Water Health Indicator is nutrient load and derived from it grey water footprint. The calculated process are surface runoff and soil loss.
+
+### Surface runoff {#srunoff}
+
+Surface runoff can be thought of as a precipitation that does not infiltrate into the soil and runs across the land surface into surface waters (streams, rivers, lakes or other reservoirs). The amount of surface runoff is influenced by soil properties, land cover, hillslope, vegetation, and storm properties such as rainfall duration, amount, and intensity [@alibardi2018book] and are often used as explanatory variables in surface runoff model.
+
+On an agricultural field scale, surface runoff water appears first during ponding resulting from infiltration excess water where filling and spilling of microscale to mesoscale depressions lead to connectivity and emergent behaviour of patches of water which connect to one another down the slope what in turn can lead to appearance of the surface water runoff on the hillslope [@mcdonnell2013].
+
+One of the common surface runoff estimation approaches from the the observed rainfall is the Curve Number method [@usda_srun_2021book] ([Equation 1](#srun)).
+
+```{=latex}
+\begin{equation}
+  Q = \frac{(P-\lambda \times S)}{(P+\left(1-\lambda\right) \times S)}
+  (\#eq:srun)
+\end{equation}
+```
+where $P$ is rainfall in mm $\lambda$ is described as initial abstraction ratio, $S$ is soil storage index in mm. $\lambda$ was assigned triangular distribution based on estimates by @hawkins2009book, $T \sim \left(m=0.0618,a=0,b=0.9793\right)$. Soil storage index is related to the soil and cover conditions through the Curve Number. Physical meaning of S can be expressed as the maximum possible difference between rainfall and runoff after the initial abstraction and can be interpreted as a time-variable measure for site water storage. It is derived separately for the curve numbers under various soil cover complexes [@usda_hsc_2021book], according to [Equation 2](#storage).
+
+```{=latex}
+\begin{equation}
+  S = \left(\frac{CN}{1.42-(0.0042\times CN)}\right)-254
+  (\#eq:storage)
+\end{equation}
+```
+Weather component of the surface runoff model ([Equation 3](#rainevent)) considers average annual rainfall $(P)$, average number of rain days during year $(RD)$, rain days correction factor $(RD_{corr})$, which refers to number of days during which rainfall generates runoff, and rainfall correction factor $(P_{corr})$, that is fraction of rainfall events exceeding 5mm. Introduction of this correction allows for calculating average amount of rainfall which will generate runoff per rainfall event.
+
+```{=latex}
+\begin{equation}
+  P_{5mm} = \frac{(P\times P_{corr})}{RD\times RD_{corr}}
+  (\#eq:rainevent)
+\end{equation}
+```
+Effect of conservation tillage and residue management practices is taken into account and expressed in hydrologic conditions, either good or poor [@usda_hsc_2021book]. In general cropland with conservation tillage and residue management practices will be considered to be in good hydrologic condition. The indication for poor hydrologic condition is a percentage of surface cover by residue between 5 and 20%, whereas good status will be indicated by land surface covered by more than $\geq$ 20% of residue. However, special attention was given to no-till cropping system where the modelled runoff is likely to be overestimated using standard CN values [@endale2011].
+
+### Soil erosion by water {#ser}
+
+Soil loss is modelled using Universal Soil Loss Equation, [Equation 4](#usle), developed by the United States Department of Agriculture (USDA) [@wischmeier1978]. It is preferred approach due its simple structure and farm level spatial resolution. The basis of the USLE is a unit plot, represented by a small, fallow agricultural plot (22.1 m long x 1.8 m wide) with a 9% slope gradient and an up-down slope tillage pattern. The soil losses of other experimental erosion plots are described relative to these reference conditions of the USLE unit plot.
+
+```{=latex}
+\begin{equation} 
+  E = R\times\ K\times\ L\times\ S\times\ C\times\ P
+  (\#eq:usle)
+\end{equation}
+```
+#### Rainfall factor (R) {#rfactor}
+
+The R-factor reflects the impacts that rainfall and runoff have on water erosion. Originally the R-factor is defined as a summation of the total kinetic storm energy times the maximum 30-min rainfall intensity for all rainstorms in a given year [@wischmeier1978]. Since, most erosion and nutrient loss events are associated with high magnitude rainfall events [@macrae2007], we assume simpler power relationship ([Equation 5](#rfactor1)) using average annual rainfall developed by @renard1994.
+
+```{=latex}
+\begin{equation}
+  R = 0.0483\times\ P^{1.61}
+  (\#eq:rfactor1)
+\end{equation}
+```
+where input variable $P$ here is annual average amount of rainfall in mm.
+
+Such simplified formulas can be found in soil erosion estimations for various geographies and climatic conditions, for instance the Food and Agricultural Organisation derived piecewise empirical relationship ([Equation 6](#rfactor2)) for agricultural development planning in Kenya, in which average annual erosivity is related by a power function and linearly to average annual rainfall below 2000 mm exceeding 2000 mm respectively [@critchley2013book].
+
+```{=latex}
+\begin{equation}
+  R = \begin{cases}117.6\times\ 1.001^{P} & P < 2000 mm \\0.5\times\ P & P > 2000 mm\end{cases}
+  (\#eq:rfactor2)
+\end{equation}
+```
+#### Soil erodibility factor (K) {#kfactor}
+
+It represents soil susceptibility to erosion. Development of the CPT was based on approach by Haith (1992) [@haith1992book] using organic matter content and soil texture. The implemented formulas are given in the supplementary table 2.
+
+#### Topographic factors (L and S) {#lsfactor}
+
+The L- and S-factors represent the effect of hillslope length and gradient steepness on soil erosion respectively. Estimation of L-factor ([Equation 7](#lfactor)) follows methodology of @griffin1988 and S-factor ([Equation 8](#sfactor)) is that of @moore1986:
+
+```{=latex}
+\begin{equation}
+  L = \left(\frac{A}{22.13}\right)^{m}\times\ (m+1)
+  (\#eq:lfactor)
+\end{equation}
+```
+and
+
+```{=latex}
+\begin{equation}
+  S = \left(\frac{sin\theta}{0.0896}\right)^n
+  (\#eq:sfactor)
+\end{equation}
+```
+where input variable $A$ is an area up slope affected by erosion and $\theta$ is the gradient, and constants are $m = 0.4\times(0.2-0.6)$ and $n = 1.3 \times(1.0-1.3)$.
+
+#### Erosion control factor (C) {#cfactor}
+
+It reflect the effects of farm management on soil erodibility which varies greatly throughout a year and for instance soil is more susceptible to water erosion during seedbed preparation than when a mature crop is present. List of assigned Values presented in the supplementary table 2.
+
+#### Cropping management factor (P) {#pfactor}
+
+It represents the effects that different cropland practices (e.g., contouring or terracing) have on water erosion. List of assigned values from literature are presented in the supplementary table 2.
+
+#### Sediment trapping efficiency {#sdr}
+
+Soil loss is obtained by considering mean annual soil erosion rate (Section \@ref(ser)) and sediment trapping to represent delivery of eroded sediment from agricultural system to adjacent watercourse. Effect of riparian buffers on reducing sediment losses has been found to be significantly positive in numerous studies [@stutter2021; @yuan2009]. Effect of buffer strip on sediment trapping is oftentimes represented as a function of buffer's width. An example of such a relationship developed by @yuan2009 is given in [Equation 9](#rzeff). However, the sediment delivery to surface waters will vary from field to field based on landscape conditions [@yuan2009]. In the BN model the average filtering efficiency of riparian zone is implemented using predictive approach by @dosskey2008 who derived multiple procedures for calculating trapping efficiencies of sediment and water (for both runoff water and dissolved species) using different combinations of site specific data ([Table 3](#buffefftbl)).
+
+```{=latex}
+\begin{equation}
+  SDR = 1-(0.0714\times\ ln (RZ_{width}) + 0.6774)
+  (\#eq:rzeff)
+\end{equation}
+```
+where input variable $RZ_{width}$ is width of riparian zone.
+
+```{r buffefftbl, paged.print=FALSE}
+
+Reference.line <-  c("E1", "E2", "E3", "E4", "E5", "E6", "E7")
+Field.length <-  c(200, 200, 200, 400, 400, 200, 400)
+Slope <-  c("2", "2", "2", "2", "2", "10", "2")
+Soil.texture <-  c("Fine sandy loam", "Silty clay loam",
+                   "Silty clay loam", "Silty clay loam", "Fine sandy loam",                                                                                "Silty clay loam", "Silty clay loam")
+Material <-  c("Sediment", "Sediment", "Sediment", "Sediment", "Water", "Sediment", "Water")
+
+tb <- data.frame(Reference.line, Field.length, Slope, Soil.texture, Material)
+ 
+kable(tb, 
+      caption = "Reference site-specific conditions",
+      booktabs = T,
+      linesep = "\\addlinespace",
+      col.names = c("Reference line", "Field length (m)", "Slope (%)", "Soil texture", "Material"),
+      align = "c") %>%
+  kable_styling(latex_options = c("hold_position", "striped"),
+                font_size = 10) %>% 
+  row_spec(0, bold = T) %>% 
+  column_spec(1, italic = T)
+```
+
+Each of the four site variables (soil texture, slope, field slope length, field C factor) had a substantial effect on the relationship between trapping efficiency and width of filter strip. The relationships include the range of site specific conditions and follow nonlinear regression as demonstrated on [Figure 1](#buffeffplt). Code to emulate plotted results can be found in [Appendix 1](#a1). Based on provided local landscape and soil data (slope and soil texture) the BN model will select appropriate relationship to model sediment trapping efficiency.
+
+```{r buffeffplt, fig.asp=0.5, fig.width=5, fig.cap="Reference buffer efficiencies under 7 scenarios", paged.print=TRUE}
+
+buff.width <- seq(from = 1, to = 100, by = 1)
+df.buff.eff <- tibble(buff.width,
+E1 = 0, E2 = 0, E3 = 0, E4 = 0, E5 = 0, E6= 0, E7 = 0)
+for (i in seq_along(buff.width)) {
+  a1 <-22.9239
+  b1 <- 0.0124
+  a2 <- 41.8543
+  b2 <- 0.0362
+  a3 <- 95.0098
+  b3 <- 0.0250
+  a4 <- 95.5259
+  b4 <- 0.0511
+  a5 <- 97.3184
+  b5 <- 0.1103
+  a6 <- 97.0041
+  b6 <- 0.3133
+  a7 <- 100
+  b7 <- 100
+  df.buff.eff$E1[i] <- a1*(1-exp(-b1*buff.width[i]))
+  df.buff.eff$E2[i] <- a2*(1-exp(-b2*buff.width[i]))
+  df.buff.eff$E3[i] <- a3*(1-exp(-b3*buff.width[i]))
+  df.buff.eff$E4[i] <- a4*(1-exp(-b4*buff.width[i]))
+  df.buff.eff$E5[i] <- a5*(1-exp(-b5*buff.width[i]))
+  df.buff.eff$E6[i] <- a6*(1-exp(-b6*buff.width[i]))
+  df.buff.eff$E7[i] <- a7*(1-exp(-b7*buff.width[i]))
+}
+
+buff.eff.plt <- ggplot(df.buff.eff) +
+  geom_line(aes(x = buff.width, y = E1, colour = "E1"), size= 0.7) +
+  geom_line(aes(x = buff.width, y = E2, colour = "E2"), size= 0.7) +
+  geom_line(aes(x = buff.width, y = E3, colour = "E3"), size= 0.7) +
+  geom_line(aes(x = buff.width, y = E4, colour = "E4"), size= 0.7) +
+  geom_line(aes(x = buff.width, y = E5, colour = "E5"), size= 0.7) +
+  geom_line(aes(x = buff.width, y = E6, colour = "E6"), size= 0.7) +
+  geom_line(aes(x = buff.width, y = E7, colour = "E7"), size= 0.7) +
+  labs(x = "Buffer width (m)",
+       y = "Trapping efficiency (%)",
+       colour = "Reference lines") +
+  theme_pubr(base_size = 9) +
+  theme(legend.position = "right") 
+
+buff.eff.plt
+```
+
+### Nitrogen load and Grey Water Footprint {#nload}
+
+Water runoff from an individual farm can vary greatly over time and under various topographic and land management conditions and thus the mass of nitrogen discharged from a field. In fact assessing the load of a nutrient emitted from a field over certain period of time could give a more meaningful assessment of a farmer's contribution to bettering/impairing of surface water quality in the immediate vicinity to the field than concentration. Pollutant loading integrates various source and area from which it is discharged so it is better suited to the diffuse sources while concentration is a more "confined" measure and more appropriate for point sources. Nutrients loads are calculated using approach by @qian2016 and @nummer2018 in which the multilevel linear model was fitted to MANAGE dataset taking into account random effects of 3 factors: conservation tillage, land use, fertiliser application method ([Equation 10](#nload)). It is an empirical model, whose coefficients will have to be adjusted when new data become available. Covariates were fitted with multilevel linear model to explain effect of conservation tillage accompanied by other factors such as amount of used fertiliser, soil loss, runoff, and type of land use (crop type/rotation/pasture).
+
+```{=latex}
+\begin{equation}
+  N_{Load} = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} + \beta_{3}x_{3}
+  (\#eq:nload)
+\end{equation}
+```
+where $N_{load}$ is nitrogen load $(kg/(ha~\times~yr))$, and $\beta_{0}$, $\beta_{1}$, $\beta_{2}$, $\beta_{3}$ are coefficients of regression with respective mean values (standard errors) 0.30(0.16), 0.77(0.09), 0.38(0.06) and 0.14(0.10). $x_{1}$, $x_{2}$, and $x_{3}$ are covariates surface runoff $(mm/yr)$, soil loss $(kg/(ha~\times~yr))$, and nitrogen application rate $(kg/(ha~\times~yr))$ respectively.
+
+A grey water footprint can be calculated ([Equation 11](#gwf)) for a particular product, or any well defined group of consumers (e.g. an individual, family, village, city, province, state or nation) or producers (e.g. a public organization, private enterprise or economic sector) [@sameer2016report], or for a geographically delineated area (e.g. a river catchment or a farm) [@muratoglu2020; @environmentagencyuk2014].
+
+```{=latex}
+\begin{equation}
+  GWF = \frac{N_{load}}{C_{max}-C_{nat}}
+  (\#eq:gwf)
+\end{equation}
+```
+where GWF is the Grey Water Footprint per hectare $(m^3/(ha~\times~yr))$, $C_{max}$ and $C_{nat}$ are maximum acceptable and natural concentrations $(kg/m^3)$. Range and median values of the maximum acceptable concentration was defined using threshold concentrations for achieving good to moderate ecological status applied across European Union by the member states [@poikane2019] and grouped by surface water according to the "broad" typology [@solheim2019]. For instance, total nitrogen max acceptable concentration is set to median value 1.5 (range) (0.4-10) $mg/dm^3$ for a very small river at mid-altitude (200-800 meters above sea level). Nitrogen natural concentration was taken to vary between 0-0.7 $mg/dm^3$ based on "Class 1: Natural" of the UN water quality indicators for the Sustainable Development Goal 6.3.2 [@unep2017book]. However, also higher natural concentration ranges are reported for total nitrogen [@liu2012], and different concentration values will apply to other nitrogen species [@franke2013book]. We adopted approach to estimate the grey water footprint which is more detailed than the default approach proposed by the Water Footprint Network (2009) [@hoekstra2009book]. The default GWF estimation is part of Tier 1 assessment of the grey water footprint which incorporates simple leaching-runoff fractions describing the percentage of applied chemical lost to groundwater through leaching or surface water through runoff [@franke2013book]. Whereas Tier 2 and 3 are based on more detailed approaches, using site specific data and empirical or mechanistic models to estimate load of pollutants [@hoekstra2009book].
+
+# Results {#results}
+
+Three submodels, surface runoff, soil loss and nitrogen load were scrutinised with aim to assure they provide satisfactory predictions alone, that is surface runoff and soil loss, and when compiled together in the network together with nitrogen load. First the data-driven approach was evaluated on literature data to grade the Bayes net using a set of real cases to see how well the predictions of the net match the actual cases. Next the model based on known relationships (Curve Number and Universal Soil Loss Equation) was evaluated against literature data and reference model.
+
+Once the model structure and set of variables were fixed sensitivity analysis was performed. Subsequently, simulations with respect to varying environmental and crop management factors were run. The final results were divided into Scenario 1 and 2 to describe changes in surface runoff, soil loss, nitrogen load and grey water footprint with respect to variable precipitation and nitrogen application rate. Scenario 1 represents better site conditions in terms of hydrologic conditions, preventing losses from the cropping system while scenario 2 was created to reflect worse site conditions, favourable for creating surface runoff, and resulting losses ([Table 4](#scenariostbl)). Three cropping practices were taken into account: conventionally tilled crops in straight rows, straight rows with crop residues and no-till. Straight row fields are those farmed in straight rows either up and down hill or across the slope.
+
+```{r scenariostb, out.extra='', paged.print=FALSE}
+
+site.ch <- c("Nitrogen application rate\n(kg/(ha*yr))",
+             "Slope (%)",
+             "Field length (m)",
+             "Soil texture",
+             "Organic matter content (%)",
+             "Soil Hydrologic Group",
+             "Buffer strip (m)") 
+sc1 <- c("25-350", "2", "350", "Silt loam", "Medium", "B", "10")
+sc2 <- c("25-350", "10", "100", "Sandy clay loam", "Low", "C", "10")
+
+tb <- data.frame(site.ch, sc1, sc2)
+
+kable(tb, 
+      caption = "Scenario characteristics",
+      booktabs = T,
+      linesep = "\\addlinespace",
+      col.names = c("Characteristics",
+                    "Scenario 1",
+                    "Scenario 2"),
+      align = "r") %>%
+  kable_styling(latex_options = c("hold_position", "striped"),
+                font_size = 8) %>% 
+  row_spec(0, bold = T) %>% 
+  column_spec(1, italic = T)
+```
+
+## Model evaluation {#modeva}
+
+Three components (submodels) of the BN model were evaluated, surface runoff, soil erosion rate, and nitrogen load. First, the BN model trained on data was evaluated by comparing with data set collected from literature, not used for model/parameter learning. This activity was performed separately for the three submodels. Visual comparison of the applicability domain of the training and evaluation datasets is shown on [Figure 2](#evahists).
+
+```{r evahists, out.width = "70%", fig.align = "center", fig.cap="Applicability domain of the training and evaluiation datasets", out.extra=''}
+include_graphics("images/hists.png")
+```
+
+Additionally, two learning algorithms the counting-learning and expectation-maximisation procedures were tested for predicting surface runoff ([Figure 3](#srun-cl-em) and soil loss ([Figure 4](#sloss-em-cl)).
+
+```{r srun-em-cl, out.extra='', out.width = "85%", fig.align = "center", fig.cap="Comparison of simualation results of surface runoff model learned from data using A) Counting learning and B) Expectation-Maximisation algorithms against literature data"}
+
+srun.cl <- image_read("images/srun_cl.jpg") 
+srun.em <- image_read("images/srun_em.jpg")
+
+ggdraw() +
+  draw_image(srun.cl, width = 0.5)+
+  draw_image(srun.em, width = 0.5, x = 0.5) +
+  draw_plot_label("A", size = 10, x = 0, y = 0.85) +
+  draw_plot_label("B", size = 10, x = 0.5, y = 0.85)
+
+```
+
+```{r sloss-em-cl, out.extra='', out.width = "85%", fig.align = "center", fig.cap="Comparison of simualation results of soil loss model learned from data using A) Counting learning and B) Expectation-Maximisation algorithms against literature data"}
+
+sloss.cl <- image_read("images/sloss_cl.jpg") 
+sloss.em <- image_read("images/sloss_em.jpg")
+
+ggdraw() +
+  draw_image(sloss.cl, width = 0.5)+
+  draw_image(sloss.em, width = 0.5, x = 0.5) +
+  draw_plot_label("A", size = 10, x = 0, y = 0.85) +
+  draw_plot_label("B", size = 10, x = 0.5, y = 0.85)
+
+```
+
+After this step the both surface runoff and soil loss were connected to nitrogen load node quality assessment was carried out with nitrogen load being a target a node of this analysis. Using Netica's functionality "Test with cases" to assess the network using external data (not involved in model training) various scores of model performance was produced. [Table 5](#scoring) provides information on how well the BN performs on independent data, the results are given as series of scoring rules: Error rate, Logarithmic loss, Quadratic loss, and Spherical payoff. Error rate, determines how many times it misclassified a case (external data), Logarithmic loss, it is the natural log between 0 and infinity with zero indicating the best performance, Quadratic loss, ranges between 0 and 2, with 0 being best, and Spherical loss, ranges between 0 and 1, with 1 being best. The scoring was performed twice for each learning algorithm.
+
+```{r scoring, paged.print=FALSE}
+
+test <-  c("Error rate", "Logarithmic loss", "Quadratic loss", "Spherical payoff")
+cl <-  c("44.42%", "1.248", "0.6333", "0.6086")
+em <-  c("35.03%", "1.933", "0.5252", "0.7002")
+
+
+tb <- data.frame(test, cl, em)
+ 
+kable(tb, 
+      caption = "Quality assessment of nitrogen load prediction in the data-trained Bayesian Network",
+      booktabs = T,
+      linesep = "\\addlinespace",
+      col.names = c("Test", "Counting-Learning", "Expectation-maximization"),
+      align = "r") %>%
+  kable_styling(latex_options = c("hold_position", "striped"),
+                font_size = 10) %>% 
+  row_spec(0, bold = T) %>% 
+  column_spec(1, italic = T)
+```
+
+After implementing the Curve Number and Universal Soil loss Equation models in Bayesian Network the following evaluation steps were carried out. Surface runoff, soil erosion rate and nitrogen load were compared first with the results obtained with the [US EPA STEPL](https://www.epa.gov/nps/spreadsheet-tool-estimating-pollutant-loads-stepl) model and then with literature data. The STEPL surface runoff model is supported with data from the BASINS 4.0 meteorological database. It provides a national, at the country wide scale, database consisting of 4,998 weather station that is quality controlled and corrected for missing and accumulated data. Specifically, the database contains data from the NOAA--NCDC. Data included in the STEPL were filtered to include stations with \>30 years of records to provide a long-period to calculate the average annual precipitation and average annual number of rain days at each of the stations. The soil erosion component of the STEPL model is supported by soil erosion parameter values from the Natural Resources Conservation Service and from the [National Resources Inventory (NRI)](https://www.nrcs.usda.gov/wps/portal/nrcs/detail/national/technical/nra/nri/?cid=nrcs143_014196). A brief graphical overview of the datasets used for model evaluation of surface runoff and soil erosion are given on [Figure 5](#histeplt).
+
+```{r histeplt, out.extra='', fig.align="center", fig.asp=0.6, fig.width=5, fig.cap="Data densities of the selected variables included in the STEPL model. Number of weather data points: 8219, number of soil erosion factors data points: 3107.", message=FALSE, error=FALSE, warning=FALSE}
+
+df_usle <- read_csv("USLE_params.csv", na = "") %>%
+  as_tibble()
+
+df_weather <- read_excel("Rain_data_STEPL.xlsx") %>% 
+  as_tibble()
+
+ravg <- ggplot(df_usle, aes(x = Ravg)) +
+  geom_histogram(fill = "cornflowerblue",
+                 color = "black",
+                 bins = 25) +
+  
+  labs(y = "", x = "Rainfall erosivity factor (R)") +
+  theme_pubr(base_size = 9)
+
+kavg <- ggplot(df_usle, aes(x = Kavg)) +
+  geom_histogram(fill = "cornflowerblue",
+                 color = "black",
+                 bins = 25) +
+ 
+  labs(y = "", x = "Soil erodibility factor (K)") +
+  theme_pubr(base_size = 9)
+
+lsavg <- ggplot(df_usle, aes(x = LSavg)) +
+  geom_histogram(fill = "cornflowerblue",
+                 color = "black",
+                 bins = 25) +
+  
+  labs(y = "", x = "Topographic factor (LS)") +
+  expand_limits(x = c(0, 25)) +
+  theme_pubr(base_size = 9)
+
+pavg <- ggplot(df_usle, aes(Pavg)) +
+  geom_histogram(fill = "cornflowerblue",
+                 color = "black",
+                 bins = 25) +
+  labs(y = "", x = "Cropping management factor (P)") +
+  theme_pubr(base_size = 9)
+
+
+cavg <- ggplot(df_usle, aes(x = Cavg)) +
+  geom_histogram(fill = "cornflowerblue",
+                 color = "black",
+                 bins = 25) +
+  labs(y = "", x = "Erosion control factor (C)") +
+  theme_pubr(base_size = 9)
+
+rain.hist <- ggplot(df_weather, aes(Precipitation_mm_yr)) +
+  geom_histogram(fill = "cornflowerblue",
+                 color = "black",
+                 bins = 25) +
+   scale_x_continuous(breaks = seq(0, 3000, 1000),
+                     limits = c(0, 3000)) +
+  labs(y = "", x = "Precipitation (mm/yr)") +
+  theme_pubr(base_size = 9)
+
+rdays.hist <- ggplot(df_weather, aes(Rain_days_d_yr)) +
+  geom_histogram(fill = "cornflowerblue",
+                 color = "black",
+                 bins = 25) +
+  labs(y = "", x = "Rain days (d/yr)") +
+  theme_pubr(base_size = 9)
+
+hists <- ggarrange(rain.hist, rdays.hist, ravg, kavg, lsavg, pavg, cavg, ncol = 3, nrow = 3)
+annotate_figure(hists, left = text_grob("Count", rot = 90, size = 10))
+```
+
+Curve number method evaluation on two datasets, literature data and US EPA weather data (BASINS) [Figure 6](#srun-CN-lit). STEPL model was also applied with to the literature data and used in the comparison.
+
+```{r srun-CN-lit, out.extra='', out.width = "80%", fig.align = "center", fig.cap="Comparison of simualation results of surface runoff model based on Curve Number approach against A) STEPL using literature data and B) STEPL model using its internal dataset"}
+
+srun.CN.lit <- image_read("images/srun_CN_lit.jpg") 
+srun.CN.stepl <- image_read("images/srun_CN_stepl.jpg")
+
+ggdraw() +
+  draw_image(srun.CN.lit, width = 0.5)+
+  draw_image(srun.CN.stepl, width = 0.5, x = 0.5) +
+  draw_plot_label("A", size = 10, x = 0, y = 0.85) +
+  draw_plot_label("B", size = 10, x = 0.5, y = 0.85)
+
+```
+
+USLE implementation in the BN was likewise evaluated on two datasets: Literature data and US EPA soil loss data [Figure 7](#sloss-usle-lit). Similarly the STEPL model was used to literature data and compared with the prediction of the BN network.
+
+```{r sloss-usle-lit, out.extra='', out.width = "80%", fig.align = "center", fig.cap="Comparison of simualation results of soil erosion model based on USLE approach against A) STEPL using literature data and B) STEPL model using its internal dataset"}
+
+sloss.usle.lit <- image_read("images/sloss_usle_lit.jpg") 
+sloss.usle.stepl <- image_read("images/sloss_usle_stepl.jpg")
+
+ggdraw() +
+  draw_image(sloss.usle.lit, width = 0.5)+
+  draw_image(sloss.usle.stepl, width = 0.5, x = 0.5) +
+  draw_plot_label("A", size = 10, x = 0, y = 0.85) +
+  draw_plot_label("B", size = 10, x = 0.5, y = 0.85)
+
+```
+
+Especially large error rates for nitrogen load signalised poor performance of the BN network trained on data. High value of error rate mean high occurrence of wrongly predicted outcome, meaning that nitrogen load in the best case, that is when using the EM algorithm, would misclassify around 33% of times nitrogen load either as to high or to low. This lead to adoption of alternative approaches to model surface runoff and soil loss based on well established relationships.
+
+Overall the simulation results improved after the BN network structure and parameters were adapted to model surface runoff using Curve Number method and USLE to model soil erosion. Improvement of the surface runoff predictions using CN method can be observed when field rainfall data are used to model surface runoff. While using surface runoff model trained on data there is no visible correlation between rainfall and simulated runoff whereas CN method allows for better predictions, simulated data points for the reported in the literature rainfall values are spread, however not evenly, around 1:1 line. Having obtained satisfactory results of surface runoff and soil erosion against literature data and the reference model, respectively nitrogen load evaluation yielded good results [Figure 8](#nloadeva). However the comparison was available for very generic model set up, where only USLE model factors varied with location, and no information on more detailed aspects such as land slope was used. However the USLE factors implemented in the BN are derived either from well known peer reviewed relationships e.g. @renard1994, or often used in various reference models such as RZWQM [@hanson1998; @hu2006; @ma2007] or GWLF [@haith1992book] as examples, or described in engineering handbooks [@renard1997book].
+
+```{r nloadeva, out.extra='', fig.align="center", fig.asp=0.8, fig.width=3, fig.cap="Simulated total nitrogen load with bayesian network compared with simualated data from the US EPA STEPL model", paged.print=TRUE}
+nload_test <- read_excel("Calibset_new.xlsx", sheet = "nload_test") %>%
+  select(nload_stepl, nload_bn) %>% 
+  filter(nload_bn < 200 & nload_stepl < 200) 
+ 
+nload.test.plt <- ggplot(nload_test, aes(nload_stepl, nload_bn)) +
+  geom_point(size = 1, alpha= 0.7, colour = "#000000", shape = 21, fill = "#ff8040") +
+  geom_abline(intercept = 0, slope = 1, size = 1) +
+  geom_abline(slope = 1, intercept = 27, linetype = "dashed") +
+  geom_abline(slope = 1, intercept = -27, linetype = "dashed") +
+  labs(x = "Simulated (STEPL) total nitrogen load\n(kg/(ha*yr))",
+       y ="Simulated (BN) total nitrogen load\n(kg/(ha*yr))") +
+  annotate("text", x = 15, y = 150, label = "N = 3043", size = 2) +
+  annotate("text", x = 170, y = 185, label = "1:1 line", size = 2) +
+  expand_limits(x = c(0, 200), y = c(0, 200)) +
+  theme_pubr(base_size = 8)
+  
+nload.test.plt
+```
+
+Sensitivity analysis is used to evaluate how strongly the output of the BN is influenced by the provided evidence [@korb2010book]. In order to assess how much the outcome of the query node would be influenced by a single finding at each of the other nodes the variance reduction metric is used. It is a measure of the expected reduction in variance of the expected value of the query node due to a finding at a varying node and is given by [Equation 12](#sanaleq).
+
+```{=latex}
+\begin{equation}
+  Var\left(Q|f\right) = \sum_{q \in Q} P\left(q|Q\right) \left[q - E\left(Q|f\right   )\right]^{2}
+(\#eq:sanaleq)
+\end{equation}
+```
+where $Q$ is the query variable, $q$ a state of the query variable, $F$ is the varying variable, $f$ is a state of varying variable, $V(Q|f)$ is the variance of the query variable given a value of the state in the varying variable $(F)$ and $E(Q|f)$ is the expected value of the $Q$ given new finding $f$ for the node $F$.
+
+### Sensitivity analysis {#sanal}
+
+Sensitivity of the four primary outputs, nGWF, nitrogen load, soil erosion and surface runoff, to other nodes in the BN was first examined ([Figure 9](#sensitivity)). The measure employed to investigate sensitivity analysis is the variance reduction, that is, the difference in output nodes distribution, such as nGWF or soil erosion, before and after information is provided about their parent nodes eg., nitrogen load for nGWF or erodibilty factor for soil erosion.
+
+```{r sensitivity,out.extra='', fig.asp=1, fig.cap="Ranking of the variables according to how sensitive the notwork is to changes in inputs on four query nodes: nGWF, nitrogen load, surface runoff and soil erosion. Analysis performed before entering evidence. ", fig.width=6, paged.print=TRUE}
+df.sa.ngwf <-read_excel("SA_no evidence.xlsx",
+                    sheet = "ngwf",
+                    range = "A2:C31",
+                    col_names = c("nGWF",
+                                 "Variance reduction",
+                                 "Percentage_variance_reduction")) %>% 
+  mutate(nGWF = as.factor(nGWF),
+         nGWF = fct_reorder(nGWF, Percentage_variance_reduction))
+  
+ngwf.sa.plt <- ggplot(df.sa.ngwf, aes(x=nGWF, y=Percentage_variance_reduction)) +
+  geom_bar(stat="identity", fill="#f68060", alpha=.8, width=.8) +
+  coord_flip() +
+  labs(y = "% variance reduction",
+       x ="",
+       title = "Nitrogen Grey Water Footprint") +
+  expand_limits(y = c(0, 100)) +
+  theme_bw(base_size = 12)
+
+df.sa.nload <-read_excel("SA_no evidence.xlsx",
+                    sheet = "nload",
+                    range = "A2:C31",
+                    col_names = c("nload",
+                                 "Variance reduction",
+                                 "Percentage_variance_reduction")) %>% 
+  mutate(nload = as.factor(nload),
+         nload = fct_reorder(nload, Percentage_variance_reduction))
+  
+nload.sa.plt <- ggplot(df.sa.nload, aes(x=nload, y=Percentage_variance_reduction)) +
+  geom_bar(stat="identity", fill="#f68060", alpha=.8, width=.8) +
+  coord_flip() +
+  labs(y = "% variance reduction",
+       x ="",
+       title = "Nitrogen load") +
+  expand_limits(y = c(0, 100)) +
+  theme_bw(base_size = 12)
+
+df.sa.srun <-read_excel("SA_no evidence.xlsx",
+                    sheet = "srun",
+                    range = "A2:C31",
+                    col_names = c("srun",
+                                 "Variance reduction",
+                                 "Percentage_variance_reduction")) %>% 
+  mutate(srun = as.factor(srun),
+         srun = fct_reorder(srun, Percentage_variance_reduction))
+  
+srun.sa.plt <- ggplot(df.sa.srun, aes(x=srun, y=Percentage_variance_reduction)) +
+  geom_bar(stat="identity", fill="#f68060", alpha=.8, width=.8) +
+  coord_flip() +
+  labs(y = "% variance reduction",
+       x ="",
+       title = "Surface runoff") +
+  expand_limits(y = c(0, 100)) +
+  theme_bw(base_size = 12)
+
+df.sa.sloss <-read_excel("SA_no evidence.xlsx",
+                    sheet = "sloss",
+                    range = "A2:C31",
+                    col_names = c("sloss",
+                                 "Variance reduction",
+                                 "Percentage_variance_reduction")) %>% 
+  mutate(sloss = as.factor(sloss),
+         sloss = fct_reorder(sloss, Percentage_variance_reduction))
+  
+sloss.sa.plt <- ggplot(df.sa.sloss, aes(x=sloss, y=Percentage_variance_reduction)) +
+  geom_bar(stat="identity", fill="#f68060", alpha=.8, width=.8) +
+  coord_flip() +
+  labs(y = "% variance reduction",
+       x ="",
+       title = "Soil loss") +
+  expand_limits(y = c(0, 100)) +
+  theme_bw(base_size = 12)
+
+
+ngwf.sa.plt + nload.sa.plt + srun.sa.plt + sloss.sa.plt + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect")
+
+```
+
+Variation in soil loss estimates can be predominantly explained by the variables related to topography, that is topographic factor (26.2%), and land slope (19.7%) together with plot length (3.6%) used as inputs to derive it topographic factor. Altogether these three variables account for almost 50% of the variability in soil loss estimates. The weather component of the model, rainfall and runoff factor together with annual precipitation, add up to 22.5% of the soil loss variability. Interestingly, the trapping efficiency of the buffer strip accounts alone for will b 12.7% of the soil loss. Therefore, it might be an important factor to be considered when optimising soil loss from the farm field. The high importance of land slope on soil loss ,even though it is not its direct parent node, can be possibly attributed to the fact that it is used as input to three nodes trapping efficiency, erosion control factor and topographic factor, being direct parents to soil loss.
+
+Surface runoff is largely sensitive to weather components of the model that is average rainfall per event and precipitation. Although not used directly in calculating surface runoff, the rainfall and runoff factor of the soil erosion model adds 12.5% to the total variability of the surface runoff estimates. Another nodes of USLE submodel, however of lesser importance on surface runoff, are erosion control factor, and cover and management factor. Moreover both soil erosion rate and surface runoff are sensitive to nitrogen load, 4.5 and 7.8% respectively. This is the effect of conditional dependency/independency encoded in Bays' Net. The measure employed to test dependence/independence relationship between various nodes of the network is called d-separation, and sensitivity analysis is used to see how strong these relationships are [@korb2010book].
+
+For predicting nitrogen load, surface runoff and soil will have the largest impact amounting to a little bit over 11% of variance reduction. Next is rate of applied nitrogen ranked 4th on the list with. The variance of the nGWF will be determined by the estimates of nitrogen load (44%) Max acceptable concentration (24%). Finally surface runoff and soil erosion rate used to calculate nGWF add up to 7.7% of its variance.
+
+## Surface runoff and soil erosion {#slosseseva}
+
+No-till practice reduced surface runoff to a larger degree than any other practice. It is especially effective in scenario 2 under small grain crops ([Figure 11](#sc2srunsloss)). Under scenario 2 all simulated endpoints rise quicker with increasing rainfall comparing to scenario 1 ([Figure 10](#sc1srunsloss)) with soil erosion rate reaching 5500 $kg/(ha\times yr)$ under row crops, while surface runoff reached maximum ca. 2500 $mm/yr$ under both row and small grain crops, also here the positive effect in reducing surface runoff was largest. Soil erosion was reduced around twice under no-till comparing to straight rows under row crops. This trend seems to be in agreement with some of the published evidence [@delaune2012], where total sediment losses were at least 2.8 times greater from conventional till plots than no-till. However the simulated rates of soil eroded under three agricultural practices are indistinguishable for small grain crops. Such inconsistent results could be attributed to the prior values attributed to the USLE crop and management factor (C-factor). Values of C-factor were obtained from crop, rotation and management tables from @haith1992book. Uniform distribution were assumed to reflect variability in C-factor values based on high and moderate productivity, and for a range of cropping systems. The reported values of the C-factor for no-till corn cropping system vary from 0.017 to 0.20, and for conventionally ploughed wheat ranges from 0.021 to 0.38. The implemented ranges in the form of uniform distribution may likely result in the weak response of the soil erosion submodel to the applied treatment. More accurate information on C-factor could lead to better soil erosion predictions, additionally, sensitivity analysis ranked C-factor as one of the most important variables for estimating soil erosion.
+
+```{r sc1srunsloss, out.extra='', fig.asp=0.8, fig.width=6, fig.cap="Scenario 1 simulations of soil erosion rate and surface runoff at variable precipitation under row and small grain crops", paged.print=FALSE, warning=FALSE}
+df.prec.rc1 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Row_crop", Scenario == 1)
+
+df.prec.sg1 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Small_grain", Scenario == 1)
+
+srun.rc.plt1 <- ggplot(df.prec.rc1, aes(Precipitation_mm_yr, srun, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = bquote(atop("Surface runoff", (mm/yr)))) +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 2500)) +
+  theme_pubr(base_size = 15) 
+
+
+srun.sg.plt1 <- ggplot(df.prec.sg1, aes(Precipitation_mm_yr, srun, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = "") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 2500)) +
+  theme_pubr(base_size = 15)
+
+sloss.rc.plt1 <- ggplot(df.prec.rc1, aes(Precipitation_mm_yr, sloss, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = bquote(atop("Soil erosion rate", (kg/(ha%*%yr)))),
+       title = "Row crops\nLow runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 2500)) +
+  theme_pubr(base_size = 15)
+
+
+sloss.sg.plt1 <- ggplot(df.prec.sg1, aes(Precipitation_mm_yr, sloss, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = "",
+       title = "Small grain crops\nLow runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 2500)) +
+  theme_pubr(base_size = 15)
+
+sloss.rc.plt1 + sloss.sg.plt1 + srun.rc.plt1 + srun.sg.plt1 + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect") & theme(legend.position = "bottom", legend.text = element_text(size = 14), legend.title = element_text(size = 15))
+```
+
+```{r sc2srunsloss, out.extra='', fig.asp=0.8, fig.width=6, fig.cap="Scenario 2 simulations of soil erosion rate and surface runoff at variable precipitation under row and small grain crops", paged.print=FALSE, warning=FALSE}
+
+df.prec.rc2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Row_crop", Scenario == 2)
+
+df.prec.sg2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Small_grain", Scenario == 2)
+
+srun.rc.plt2 <- ggplot(df.prec.rc2, aes(Precipitation_mm_yr, srun, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = bquote(atop("Surface runoff", (mm/yr)))) +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 3000)) +
+  theme_pubr(base_size = 15)
+
+
+srun.sg.plt2 <- ggplot(df.prec.sg2, aes(Precipitation_mm_yr, srun, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = "") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 3000)) +
+  theme_pubr(base_size = 15)
+
+sloss.rc.plt2 <- ggplot(df.prec.rc2, aes(Precipitation_mm_yr, sloss, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = bquote(atop("Soil erosion rate", (kg/(ha%*%yr)))),
+       title = "Row crops\nHigh runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 6000)) +
+  theme_pubr(base_size = 15)
+
+
+sloss.sg.plt2 <- ggplot(df.prec.sg2, aes(Precipitation_mm_yr, sloss, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = "",
+       title = "Small grain crops\nHigh runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 6000)) +
+  theme_pubr(base_size = 15)
+
+sloss.rc.plt2 + sloss.sg.plt2 + srun.rc.plt2 + srun.sg.plt2 + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect") & theme(legend.position = "bottom", legend.text = element_text(size = 14), legend.title = element_text(size = 15))
+```
+
+## Nitrogen load and Grey Water Footprint {#ngwfeva}
+
+Nitrogen load increases with precipitation reaching the highest emissions of 132 $kg/(ha\times year)$ in scenario 2 ([Figure 13](#sc2gwfnload)) and lowest of 81.4 $kg/(ha\times year)$ in scenario 1 ([Figure 12](#sc1gwfnload)) under conventional and row crops and no-tilled small grain crops respectively. Likewise the nGWF is reported to be highest under these conditions. Additionally the nGWF shows increasing trend with nitrogen application rate in both scenarios ([Figure 14](#scenario1barplt1)) and ([Figure 15](#scenario2barplt1)), however larger under site conditions described in scenario 2, reaching 9000 $m^3/(ha\times yr)$. nGWF can be reduced by decreasing amount of applied fertiliser however at a price of crop yield as demonstrated in the modelling exercise by @chukalla2018. Also the type of fertiliser will play a role in levels of emitted nitrogen from an individual farm. The effect of conservation tillage in reducing nitrogen load will be largest for highest application rates of fertiliser.
+
+```{r sc1gwfnload, out.extra='', fig.asp=0.8, fig.width=6, fig.cap="Scenario 1 simulations of nitrogen laod and grey water footprint at variable precipitation under row amd small grain crops", paged.print=FALSE, warning=FALSE}
+
+df.prec.rc1 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Row_crop", Scenario == 1)
+
+df.prec.sg1 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Small_grain", Scenario == 1)
+
+gwf.rc.plt1 <- ggplot(df.prec.rc1, aes(Precipitation_mm_yr, ngwf, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = bquote(atop("nGWF", (m^3/(ha%*%yr)))),
+       title = "Row crops\nLow runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 8000)) +
+  theme_pubr(base_size = 15)
+
+
+gwf.sg.plt1 <- ggplot(df.prec.sg1, aes(Precipitation_mm_yr, ngwf, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = "",
+       title = "Small grain crops\nLow runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 8000)) +
+  theme_pubr(base_size = 15)
+
+nload.rc.plt1 <- ggplot(df.prec.rc1, aes(Precipitation_mm_yr, nload, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = expression(atop("Nitrogen load", (kg/(ha%*%yr))))) +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 100)) +
+  theme_pubr(base_size = 15)
+
+
+nload.sg.plt1 <- ggplot(df.prec.sg1, aes(Precipitation_mm_yr, nload, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+  theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = "") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 100)) +
+  theme_pubr(base_size = 15)
+
+
+gwf.rc.plt1 + gwf.sg.plt1 + nload.rc.plt1 + nload.sg.plt1 + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect") & theme(legend.position = "bottom", legend.text = element_text(size = 14), legend.title = element_text(size = 15))
+```
+
+```{r sc2gwfnload, out.extra='', fig.asp=0.8, fig.width=6, fig.cap="Scenario 2 simulations of nitrogen laod and grey water footprint at variable precipitation under row amd small grain crops", paged.print=FALSE, warning=FALSE}
+
+df.prec.rc2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Row_crop", Scenario == 2)
+
+df.prec.sg2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Small_grain", Scenario == 2)
+
+gwf.rc.plt2 <- ggplot(df.prec.rc2, aes(Precipitation_mm_yr, ngwf, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = bquote(atop("nGWF", (m^3/(ha%*%yr)))),
+       title = "Row crops\nHigh runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 8000)) +
+  theme_pubr(base_size = 15)
+
+gwf.sg.plt2 <- ggplot(df.prec.sg2, aes(Precipitation_mm_yr, ngwf, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = "",
+       y = "",
+       title = "Small grain crops\nHigh runoff scenario") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 8000)) +
+  theme_pubr(base_size = 15)
+
+nload.rc.plt2 <- ggplot(df.prec.rc2, aes(Precipitation_mm_yr, nload, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = expression(atop("Nitrogen load", (kg/(ha%*%yr))))) +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 120)) +
+  theme_pubr(base_size = 15)
+
+
+nload.sg.plt2 <- ggplot(df.prec.sg2, aes(Precipitation_mm_yr, nload, shape = Treatment)) +
+  geom_point(size = 3.5) +
+  scale_shape_manual(labels = c("No till",
+                                "Straight row",
+                                "Straight row and\ncrop residue"),
+                     values = c(2, 0, 4)) +
+   theme(legend.key.size = unit(3, "cm"),
+        legend.text = element_text(size = 7)) +
+  labs(x = bquote(Precipitation~(mm/yr)),
+       y = "") +
+  expand_limits(x = c(0, 3000),
+                y = c(0, 120)) +
+  theme_pubr(base_size = 15)
+
+
+gwf.rc.plt2 + gwf.sg.plt2 + nload.rc.plt2 + nload.sg.plt2 + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect") & theme(legend.position = "bottom", legend.text = element_text(size = 14), legend.title = element_text(size = 15))
+```
+
+```{r scenario1barplt1, out.extra='', fig.asp=0.7, fig.width=7, fig.cap="Scenario 1 simulations of grey water footprint at variable nitrogen application rate and A) Row crops and B) Small grain", paged.print=FALSE, warning=FALSE}
+
+df.napp.rc1 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Row_crop" & N_applied_kg_N_ha_yr %in% c("75",
+                                                              "150",
+                                                              "225",
+                                                              "300"),
+         Scenario == 1)
+
+df.napp.sg1 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Small_grain" & N_applied_kg_N_ha_yr %in% c("75",
+                                                              "150",
+                                                              "225",
+                                                              "300"),
+         Scenario == 1)
+
+df.napp.rc2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Row_crop" & N_applied_kg_N_ha_yr %in% c("75",
+                                                              "150",
+                                                              "225",
+                                                              "300"),
+         Scenario == 2)
+
+df.napp.sg2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Small_grain" & N_applied_kg_N_ha_yr %in% c("75",
+                                                              "150",
+                                                              "225",
+                                                              "300"),
+         Scenario == 2)
+
+ngwf.rc.barplt1 <- ggplot(df.napp.rc1, aes(x = N_applied_kg_N_ha_yr,
+                                        y = ngwf,
+                                        fill = Treatment)) +
+  scale_fill_discrete(name = "Treatment: ",
+                      labels = c("No till",
+                               "Straight row",
+                               "Straight row and\ncrop residue")) +
+  scale_x_discrete(limits = c(75, 150, 225, 300)) +
+  geom_bar(stat = "identity",
+           position = "dodge",
+           colour = "black") +
+  geom_errorbar(aes(x = N_applied_kg_N_ha_yr,
+                    ymax = ngwf + ngwf.sd,
+                    ymin = ngwf), stat = "identity",
+                position = "dodge",
+                size = 0.5) +
+  expand_limits(y = c(0, 15000)) +
+  labs(title = "Row crops\nLow runoff potential",
+       y = bquote(atop("nGWF", (m^3/(ha%*%hyr)))),
+       x = expression(atop("Nitrogen application rate", (kg/(ha%*%yr))))) +
+  theme_pubr(base_size = 15)
+
+ngwf.sg.barplt1 <- ggplot(df.napp.sg1, aes(x = N_applied_kg_N_ha_yr,
+                                        y = ngwf,
+                                        fill = Treatment)) +
+  scale_fill_discrete(name = "Treatment: ",
+                      labels = c("No till",
+                                 "Straight row",
+                                 "Straight row and\ncrop residue")) +
+  scale_x_discrete(limits = c(75, 150, 225, 300)) +
+  geom_bar(stat = "identity",
+           position = "dodge",
+           colour = "black") +
+  geom_errorbar(aes(x = N_applied_kg_N_ha_yr,
+                    ymax = ngwf + ngwf.sd,
+                    ymin = ngwf), stat = "identity",
+                position = "dodge",
+                size = 0.5) +
+  expand_limits(y = c(0, 15000)) +
+  labs(title = "Small grain crops\nLow runoff potential",
+       y = "",
+       x = expression(atop("Nitrogen application rate", (kg/(ha%*%yr))))) +
+  theme_pubr(base_size = 15)
+
+
+ngwf.rc.barplt2 <- ggplot(df.napp.rc2, aes(x = N_applied_kg_N_ha_yr,
+                                        y = ngwf,
+                                        fill = Treatment)) +
+  scale_fill_discrete(name = "Treatment: ",
+                      labels = c("No till",
+                               "Straight row",
+                               "Straight row and\ncrop residue")) +
+  scale_x_discrete(limits = c(75, 150, 225, 300)) +
+  geom_bar(stat = "identity",
+           position = "dodge",
+           colour = "black") +
+  geom_errorbar(aes(x = N_applied_kg_N_ha_yr,
+                    ymax = ngwf + ngwf.sd,
+                    ymin = ngwf), stat = "identity",
+                position = "dodge",
+                size = 0.5) +
+  expand_limits(y = c(0, 15000)) +
+  labs(title = "Row crops\nHigh runoff potential",
+       y = bquote(atop("nGWF", (m^3/(ha%*%yr)))),
+       x = expression(atop("Nitrogen application rate", (kg/(ha%*%yr))))) +
+  theme_pubr(base_size = 15)
+
+ngwf.sg.barplt2 <- ggplot(df.napp.sg2, aes(x = N_applied_kg_N_ha_yr,
+                                        y = ngwf,
+                                        fill = Treatment)) +
+  scale_fill_discrete(name = "Treatment: ",
+                      labels = c("No till",
+                                 "Straight row",
+                                 "Straight row and\ncrop residue")) +
+  scale_x_discrete(limits = c(75, 150, 225, 300)) +
+  geom_bar(stat = "identity",
+           position = "dodge",
+           colour = "black") +
+  geom_errorbar(aes(x = N_applied_kg_N_ha_yr,
+                    ymax = ngwf + ngwf.sd,
+                    ymin = ngwf), stat = "identity",
+                position = "dodge",
+                size = 0.5) +
+  expand_limits(y = c(0, 15000)) +
+  labs(title = "Small grain crops\nHigh runoff potential",
+       y = "",
+       x = expression(atop("Nitrogen application rate", (kg/(ha%*%yr))))) +
+  theme_pubr(base_size = 15)
+
+ngwf.rc.barplt1 + ngwf.sg.barplt1 + ngwf.rc.barplt2 + ngwf.sg.barplt2 + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+```
+
+```{r scenario2barplt1, out.extra='', fig.asp=0.4, fig.width=7, fig.cap="Scenario 2 simulations of grey water footprint at variable nitrogen application rate and under A) Row crops and B) Small grain", paged.print=FALSE, warning=FALSE}
+
+df.napp.rc2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Row_crop" & N_applied_kg_N_ha_yr %in% c("75",
+                                                              "150",
+                                                              "225",
+                                                              "300"),
+         Scenario == 2)
+
+df.napp.sg2 <-read_excel("scenarios.xlsx") %>% 
+  filter(Land_use == "Small_grain" & N_applied_kg_N_ha_yr %in% c("75",
+                                                              "150",
+                                                              "225",
+                                                              "300"),
+         Scenario == 2)
+
+ngwf.rc.barplt2 <- ggplot(df.napp.rc2, aes(x = N_applied_kg_N_ha_yr,
+                                        y = ngwf,
+                                        fill = Treatment)) +
+  scale_fill_discrete(name = "Treatment: ",
+                      labels = c("No till",
+                               "Straight row",
+                               "Straight row and\ncrop residue")) +
+  scale_x_discrete(limits = c(75, 150, 225, 300)) +
+  geom_bar(stat = "identity",
+           position = "dodge",
+           colour = "black") +
+  geom_errorbar(aes(x = N_applied_kg_N_ha_yr,
+                    ymax = ngwf + ngwf.sd,
+                    ymin = ngwf), stat = "identity",
+                position = "dodge",
+                size = 0.5) +
+  expand_limits(y = c(0, 15000)) +
+  labs(title = "Row crops\nHigh runoff potential",
+       y = bquote(atop("nGWF", (m^3/(ha%*%yr)))),
+       x = expression(atop("Nitrogen application rate", (kg/(ha%*%yr))))) +
+  theme_pubr(base_size = 15)
+
+ngwf.sg.barplt2 <- ggplot(df.napp.sg2, aes(x = N_applied_kg_N_ha_yr,
+                                        y = ngwf,
+                                        fill = Treatment)) +
+  scale_fill_discrete(name = "Treatment: ",
+                      labels = c("No till",
+                                 "Straight row",
+                                 "Straight row and\ncrop residue")) +
+  scale_x_discrete(limits = c(75, 150, 225, 300)) +
+  geom_bar(stat = "identity",
+           position = "dodge",
+           colour = "black") +
+  geom_errorbar(aes(x = N_applied_kg_N_ha_yr,
+                    ymax = ngwf + ngwf.sd,
+                    ymin = ngwf), stat = "identity",
+                position = "dodge",
+                size = 0.5) +
+  expand_limits(y = c(0, 15000)) +
+  labs(title = "Small grain crops\nHigh runoff potential",
+       y = "",
+       x = expression(atop("Nitrogen application rate", (kg/(ha%*%yr))))) +
+  theme_pubr(base_size = 15)
+
+ngwf.rc.barplt2 + ngwf.sg.barplt2 + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+
+```
+
+# Conclusions {#conc}
+
+The Bayesian Network model presented here provides a generic tool for assessing overall trends in surface runoff, soil loss and nitrogen load and grey water footprint under various cropping alternatives rather than for providing accurate predictions. Due to non informative priors included in the model the network should be used with caution under site specific conditions. The difference between effectiveness of various agricultural practices will be largely dependent on the estimation of the curve number and crop management factor in case of surface runoff and soil erosion respectively. Therefore special attention should be given to accurately obtaining this value. The modelling exercise demonstrated beneficial effect of no-till practice on amount nitrogen emitted from farm. Surface runoff was reduced as well when compared to other practices, that is conventional straight row ploughing without and with addition of crop residue. The effect of practices was modulated by the type of vegetation, grouped into two general categories based on how densely they cover soil, that is row crops leaving soil more exposed than small grain crops which gives soil denser coverage. Soil erosion was reduced under small crops, but with almost no difference between agricultural practices. Better estimates of the C-factor of the implemented USLE model could improve sensitivity of the soil erosion to cropping treatment. The amount of water calculated with nGWF was dependent on the site conditions as demonstrated by higher volumes of water required to assimilate nitrogen loading from simulated plot where runoff is more easily generated.
+
+\newpage
+
+# Appendix {#app}
+
+## Code to model buffer strip trapping efficiency {#a1}
+
+``` {.R .code}
+buff.width <- seq(from = 1, to = 100, by = 1)
+df.buff.eff <- tibble(buff.width,
+E1 = 0, E2 = 0, E3 = 0, E4 = 0, E5 = 0, E6= 0, E7 = 0)
+for (i in seq_along(buff.width)) {
+  a1 <-22.9239
+  b1 <- 0.0124
+  a2 <- 41.8543
+  b2 <- 0.0362
+  a3 <- 95.0098
+  b3 <- 0.0250
+  a4 <- 95.5259
+  b4 <- 0.0511
+  a5 <- 97.3184
+  b5 <- 0.1103
+  a6 <- 97.0041
+  b6 <- 0.3133
+  a7 <- 100
+  b7 <- 100
+  df.buff.eff$E1[i] <- a1*(1-exp(-b1*buff.width[i]))
+  df.buff.eff$E2[i] <- a2*(1-exp(-b2*buff.width[i]))
+  df.buff.eff$E3[i] <- a3*(1-exp(-b3*buff.width[i]))
+  df.buff.eff$E4[i] <- a4*(1-exp(-b4*buff.width[i]))
+  df.buff.eff$E5[i] <- a5*(1-exp(-b5*buff.width[i]))
+  df.buff.eff$E6[i] <- a6*(1-exp(-b6*buff.width[i]))
+  df.buff.eff$E7[i] <- a7*(1-exp(-b7*buff.width[i]))
+}
+view(df.buff.eff)
+```
+
+\newpage
+
+# Bibliography {#bib}
