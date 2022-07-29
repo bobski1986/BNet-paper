@@ -1,2 +1,2 @@
 # BNet-paper
-Effect of conservation agriculture on nitrogen emissions from farm. Paper draft.
+Descirption of the surface water health indicator for assessing effect of conservation agriculture on nitrogen emissions from farm to edge-of-field water bodies.
